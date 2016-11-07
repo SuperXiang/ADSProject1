@@ -3,35 +3,15 @@
 	 * Java 语言: 斐波那契堆
 	 *
 	 */
-
+import java.util.*;
 	public class FibHeap {
 
 	    private int keyNum;         // 堆中节点的总数
-	    private FibNode min;        // 最小节点(某个最小堆的根节点)
-
-	    private class FibNode {
-	        int key;            // 关键字(键值)
-	        int degree;            // 度数
-	        FibNode left;        // 左兄弟
-	        FibNode right;        // 右兄弟
-	        FibNode child;        // 第一个孩子节点
-	        FibNode parent;        // 父节点
-	        boolean marked;     // 是否被删除第一个孩子
-
-	        public FibNode(int key) {
-	            this.key    = key;
-	            this.degree = 0;
-	            this.marked = false;
-	            this.left   = this;
-	            this.right  = this;
-	            this.parent = null;
-	            this.child  = null;
-	        }
-	    }
+	    private FibNode max;        // 最大节点(某个最大堆的根节点)
 
 	    public FibHeap() {
 	        this.keyNum = 0;
-	        this.min = null;
+	          this.max = null;
 	    }
 
 	    /* 
@@ -56,14 +36,14 @@
 	     
 	    /*
 	     * 将节点node插入到斐波那契堆中
-	     */
+	     */ // update 2016-11-6 min heap 变为 max heap
 	    private void insert(FibNode node) {
 	        if (keyNum == 0)
-	            min = node;
+	            max = node;
 	        else {
-	            addNode(node, min);
-	            if (node.key < min.key)
-	                min = node;
+	            addNode(node, max);
+	            if (node.key > max.key)
+	                max = node;
 	        }
 
 	        keyNum++;
@@ -71,15 +51,15 @@
 	     
 	    /* 
 	     * 新建键值为key的节点，并将其插入到斐波那契堆中
-	     */
-	    public void insert(int key) {
+	     *///update in 2016 11 6
+	    public  void insert(int key, Hashtable map, String hashtag) {
 	        FibNode node;
-
 	        node = new FibNode(key);
-	        if (node == null)
-	            return ;
-
 	        insert(node);
+	        // hasptalb string 映射到 node
+	        map.put(hashtag, node);
+	        //将 string 的值，比如“saturday"放入到node的成员变量里
+	        node.hashtag=hashtag;
 	    }
 	     
 	    /*
@@ -102,35 +82,35 @@
 	        if (other==null)
 	            return ;
 
-	        if((this.min) == null) {                // this无"最小节点"
-	            this.min = other.min;
+	        if((this.max) == null) {                // this无"最大节点"
+	            this.max = other.max;
 	            this.keyNum = other.keyNum;
 	            other = null;
-	        } else if((other.min) == null) {        // this有"最小节点" && other无"最小节点"
+	        } else if((other.max) == null) {        // this有"最大节点" && other无"最大节点"
 	            other = null;
-	        } else {                                // this有"最小节点" && other有"最小节点"
+	        } else {                                // this有"最大节点" && other有"最大节点"
 	            // 将"other中根链表"添加到"this"中
-	            catList(this.min, other.min) ;
+	            catList(this.max, other.max) ;
 
-	            if (this.min.key > other.min.key)
-	                this.min = other.min;
+	            if (this.max.key < other.max.key)
+	                this.max = other.max;
 	            this.keyNum += other.keyNum;
 	            other = null;;
 	        }
 	    }
 
 	    /*
-	     * 将"堆的最小结点"从根链表中移除，
-	     * 这意味着"将最小节点所属的树"从堆中移除!
+	     * 将"堆的最大结点"从根链表中移除，
+	     * 这意味着"将最大节点所属的树"从堆中移除!
 	     */
-	    private FibNode extractMin() {
-	        FibNode p = min;
+	    private FibNode extractMax() {
+	        FibNode p = max;
 
 	        if (p == p.right)
-	            min = null;
+	            max = null;
 	        else {
 	            removeNode(p);
-	            min = p.right;
+	            max = p.right;
 	        }
 	        p.left = p.right = p;
 
@@ -168,13 +148,13 @@
 	            cons[i] = null;
 	     
 	        // 合并相同度的根节点，使每个度数的树唯一
-	        while (min != null) {
-	            FibNode x = extractMin();            // 取出堆中的最小树(最小节点所在的树)
-	            int d = x.degree;                        // 获取最小树的度数
+	        while (max != null) {
+	            FibNode x = extractMax();            // 取出堆中的最大树(最大节点所在的树)
+	            int d = x.degree;                        // 获取最大树的度数
 	            // cons[d] != null，意味着有两棵树(x和y)的"度数"相同。
 	            while (cons[d] != null) {
 	                FibNode y = cons[d];                // y是"与x的度数相同的树" 
-	                if (x.key > y.key) {    // 保证x的键值比y小
+	                if (x.key < y.key) {    // 保证x的键值比y大
 	                    FibNode tmp = x;
 	                    x = y;
 	                    y = tmp;
@@ -186,32 +166,32 @@
 	            }
 	            cons[d] = x;
 	        }
-	        min = null;
+	        max = null;
 	     
 	        // 将cons中的结点重新加到根表中
 	        for (int i=0; i<D; i++) {
 
 	            if (cons[i] != null) {
-	                if (min == null)
-	                    min = cons[i];
+	                if (max == null)
+	                    max = cons[i];
 	                else {
-	                    addNode(cons[i], min);
-	                    if ((cons[i]).key < min.key)
-	                        min = cons[i];
+	                    addNode(cons[i], max);
+	                    if ((cons[i]).key > max.key)
+	                        max = cons[i];
 	                }
 	            }
 	        }
 	    }
 	     
 	    /*
-	     * 移除最小节点
+	     * 移除最大节点
 	     */
-	    public void removeMin() {
-	        if (min==null)
+	    public void removeMax() {
+	        if (max==null)
 	            return ;
 
-	        FibNode m = min;
-	        // 将min每一个儿子(儿子和儿子的兄弟)都添加到"斐波那契堆的根链表"中
+	        FibNode m = max;
+	        // 将max每一个儿子(儿子和儿子的兄弟)都添加到"斐波那契堆的根链表"中
 	        while (m.child != null) {
 	            FibNode child = m.child;
 
@@ -221,7 +201,7 @@
 	            else
 	                m.child = child.right;
 
-	            addNode(child, min);
+	            addNode(child, max);
 	            child.parent = null;
 	        }
 
@@ -230,9 +210,9 @@
 	        // 若m是堆中唯一节点，则设置堆的最小节点为null；
 	        // 否则，设置堆的最小节点为一个非空节点(m.right)，然后再进行调节。
 	        if (m.right == m)
-	            min = null;
+	            max = null;
 	        else {
-	            min = m.right;
+	            max = m.right;
 	            consolidate();
 	        }
 	        keyNum--;
@@ -241,13 +221,31 @@
 	    }
 
 	    /*
-	     * 获取斐波那契堆中最小键值；失败返回-1
+	     * 获取斐波那契堆中最大键值；失败返回-1
 	     */
-	    public int minimum() {
-	        if (min==null)
+	    public int maximum() {
+	        if (max==null)
 	            return -1;
 
-	        return min.key;
+	        return max.key;
+	    }
+	    
+	    public String maximum_string(Hashtable<String, FibNode> map)
+	    {
+	    	//String max_string=map.get(max);
+	    	   //Map,HashMap并没有实现Iteratable接口.不能用于增强for循环. 
+	    	String max_key=null;
+//	        for(String getKey: map.keySet()){  
+//	    	     if(map.get(getKey).equals(max)){  
+//	    	     max_key = getKey;  
+//	    	            }  
+//	        }
+	    	if (max==null)
+	            return null;
+	    	
+	    	max_key=max.hashtag;
+	    	return max_key;
+	    	
 	    }
 	      
 	    /* 
@@ -276,15 +274,15 @@
 	        node.left = node.right = node;
 	        node.marked = false;
 	        // 将"node所在树"添加到"根链表"中
-	        addNode(node, min);
+	        addNode(node, max);
 	    }
 
 	    /* 
 	     * 对节点node进行"级联剪切"
 	     *
-	     * 级联剪切：如果减小后的结点破坏了最小堆性质，
+	     * 级联剪切：如果增大后的结点破坏了最大堆性质，
 	     *     则把它切下来(即从所在双向链表中删除，并将
-	     *     其插入到由最小树根节点形成的双向链表中)，
+	     *     其插入到由最大树根节点形成的双向链表中)，
 	     *     然后再从"被切节点的父节点"到所在树根节点递归执行级联剪枝
 	     */
 	    private void cascadingCut(FibNode node) {
@@ -301,39 +299,39 @@
 	    }
 
 	    /* 
-	     * 将斐波那契堆中节点node的值减少为key
+	     * 将斐波那契堆中节点node的值增大为key
 	     */
-	    private void decrease(FibNode node, int key) {
-	        if (min==null ||node==null) 
+	    private void increase(FibNode node, int key) {
+	        if (max==null ||node==null) 
 	            return ;
 
-	        if (key > node.key) {
-	            System.out.print("decrease failed: the new key(%d) is no smaller than current key(%d)\n"+key+" "+node.key);
+	        if (key < node.key) {
+	            System.out.print("increase failed: the new key(%d) is no greater than current key(%d)\n"+key+" "+node.key);
 	            return ;
 	        }
 
 	        FibNode parent = node.parent;
 	        node.key = key;
-	        if (parent!=null && (node.key < parent.key)) {
+	        if (parent!=null && (node.key > parent.key)) {
 	            // 将node从父节点parent中剥离出来，并将node添加到根链表中
 	            cut(node, parent);
 	            cascadingCut(parent);
 	        }
 
-	        // 更新最小节点
-	        if (node.key < min.key)
-	            min = node;
+	        // 更新最大节点
+	        if (node.key > max.key)
+	            max = node;
 	    }
 
 	    /* 
-	     * 将斐波那契堆中节点node的值增加为key
+	     * 将斐波那契堆中节点node的值减小为key
 	     */
-	    private void increase(FibNode node, int key) {
-	        if (min==null ||node==null) 
+	    private void decrease(FibNode node, int key) {
+	        if (max==null ||node==null) 
 	            return ;
 
-	        if ( key <= node.key) {
-	            System.out.print("increase failed: the new key(%d) is no greater than current key(%d)\n "+key+" "+node.key);
+	        if ( key >= node.key) {
+	            System.out.print("decrease failed: the new key(%d) is no smaller than current key(%d)\n "+key+" "+node.key);
 	            return ;
 	        }
 
@@ -346,7 +344,7 @@
 	            else
 	                node.child = child.right;
 
-	            addNode(child, min);       // 将child添加到根链表中
+	            addNode(child, max);       // 将child添加到根链表中
 	            child.parent = null;
 	        }
 	        node.degree = 0;
@@ -356,16 +354,16 @@
 	        //     则将node从父节点parent的子链接中剥离出来，
 	        //     并使node成为"堆的根链表"中的一员，
 	        //     然后进行"级联剪切"
-	        // 否则，则判断是否需要更新堆的最小节点
+	        // 否则，则判断是否需要更新堆的最大节点
 	        FibNode parent = node.parent;
 	        if(parent != null) {
 	            cut(node, parent);
 	            cascadingCut(parent);
-	        } else if(min == node) {
+	        } else if(max == node) {
 	            FibNode right = node.right;
 	            while(right != node) {
-	                if(node.key > right.key)
-	                    min = right;
+	                if(node.key < right.key)
+	                    max = right;
 	                right = right.right;
 	            }
 	        }
@@ -382,17 +380,22 @@
 	        else
 	            System.out.println("No need to update!!!\n");
 	    }
-	      
-	    public void update(int oldkey, int newkey) {
+	      //update from 2016 11 7
+	    public void update(Hashtable<String, FibNode> map, String hashtag, int newkey) {
+	    	
 	        FibNode node;
-
-	        node = search(oldkey);
-	        if (node!=null)
-	            update(node, newkey);
+	        //获取需要更新的节点
+	        node = map.get(hashtag);
+	        
+	       int oldkey=node.key;
+	      //  node = search(oldkey);
+	       if (node!=null)
+	    	   //更新 node 的 frequency
+	        update(node, newkey+oldkey);
 	    }
 
 	    /*
-	     * 在最小堆root中查找键值为key的节点
+	     * 在最大堆root中查找键值为key的节点
 	     */
 	    private FibNode search(FibNode root, int key) {
 	        FibNode t = root;    // 临时节点
@@ -419,10 +422,10 @@
 	     * 在斐波那契堆中查找键值为key的节点
 	     */
 	    private FibNode search(int key) {
-	        if (min==null)
+	        if (max==null)
 	            return null;
 
-	        return search(min, key);
+	        return search(max, key);
 	    }
 
 	    /*
@@ -437,13 +440,13 @@
 	     * 删除结点node
 	     */
 	    private void remove(FibNode node) {
-	        int m = min.key;
-	        decrease(node, m-1);
-	        removeMin();
+	        int m = max.key;
+	        increase(node, m-1);
+	        removeMax();
 	    }
 
 	    public void remove(int key) {
-	        if (min==null)
+	        if (max==null)
 	            return ;
 
 	        FibNode node = search(key);
@@ -470,7 +473,7 @@
 	    }
 	     
 	    public void destroy() {
-	        destroyNode(min);
+	        destroyNode(max);
 	    }
 
 	    /*
@@ -504,11 +507,11 @@
 	    }
 
 	    public void print() {
-	        if (min==null)
+	        if (max==null)
 	            return ;
 
 	        int i=0;
-	        FibNode p = min;
+	        FibNode p = max;
 	        System.out.println("== 斐波那契堆的详细信息: ==\n");
 	        do {
 	            i++;
@@ -517,7 +520,7 @@
 
 	            print(p.child, p, 1);
 	            p = p.right;
-	        } while (p != min);
+	        } while (p != max);
 	        System.out.println("\n");
 	    }
 	}
